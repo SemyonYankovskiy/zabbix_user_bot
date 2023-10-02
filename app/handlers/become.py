@@ -1,3 +1,4 @@
+import os
 from hmac import compare_digest
 
 from aiogram import types
@@ -17,7 +18,7 @@ async def become_admin(message: types.Message):
 
     if user.is_superuser:
         await message.answer("Вы уже суперпользователь")
-    elif compare_digest(token, "cus"):
+    elif compare_digest(token, os.getenv("BECOME_TOKEN")):
         user.is_superuser = True
         await user.update(is_superuser=True)
         await message.answer("Вы стали суперпользователем")

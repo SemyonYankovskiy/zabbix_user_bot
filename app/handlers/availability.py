@@ -1,58 +1,31 @@
-from aiogram import Router, types, F
+from datetime import datetime, timedelta
+
+from aiogram import Router, types
 from aiogram.filters import Command
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
-from aiogram.utils.keyboard import InlineKeyboardBuilder
-from app.service.check_users import AffectedSubscribersChecker
+from app.service.check_users import get_affected_subscribers
 
 from ..decorators.user_status import superuser_required
+from ..callback_factories import AffectedSubscribersFactory
 from ..text import WELCOME
 
 router = Router()
 
 
-# async def get_downs_keyboard():
-#     builder = InlineKeyboardBuilder()
-#     builder.row(
-#         types.InlineKeyboardButton(text="Последние 30 минут",callback_data="min30",),
-#         types.InlineKeyboardButton(text="Последние 60 минут",callback_data="min60",),)
-#     builder.row(
-#         types.InlineKeyboardButton(text="Последний 2 час", callback_data="min120"),
-#         types.InlineKeyboardButton(text="Последние 3 часа", callback_data="min180"),)
-#     return builder.as_markup()
-#
-#
-# @router.message(Command("check_downs"))
-# @superuser_required
-# async def check_downs(message: types.Message):
-#     default_limit = "min:30"
-#     keyboard = await get_downs_keyboard()
-#     await message.answer(WELCOME, reply_markup=keyboard)
-#
-#
-# @router.callback_query(F.data == "min30")
-# async def min30(callback: types.CallbackQuery):
-#     result = AffectedSubscribersChecker().get_affected_subscribers()
-#     keyboard = await get_downs_keyboard()
-#     await callback.answer(reply_markup=keyboard)
-#     print(result)
-#     print(str(result))
-#     await callback.message.answer(str(result))
-############################################################################
-
-
-def get_downs_keyboard(current_limit: str):
+def get_downs_keyboard(current_limit: int):
     limit_from_user = [
-        ("Последние 30 минут", "min:30"),
-        ("Последний 1 час", "min:60"),
-        ("Последний 2 часа", "min:120"),
-        ("Последние 3 часа", "min:180"),
+        ("Последние 30 минут", 30),
+        ("Последний 1 час", 60),
+        ("Последний 2 часа", 120),
+        ("Последние 3 часа", 180),
     ]
 
     keyboard = []
 
-    for name, callback_data in limit_from_user:
-        if current_limit == callback_data:
-            name = f"❇️ {name}"
+    for name, minutes in limit_from_user:
+        if current_limit == minutes:
+            name = f"❇️{name}"
+        callback_data = AffectedSubscribersFactory(from_minutes=minutes).pack()
         keyboard.append([InlineKeyboardButton(text=name, callback_data=callback_data)])
 
     return InlineKeyboardMarkup(inline_keyboard=keyboard)
@@ -61,17 +34,30 @@ def get_downs_keyboard(current_limit: str):
 @router.message(Command("check_downs"))
 @superuser_required
 async def check_downs(message: types.Message):
-    default_limit = "min:30"
+    default_limit = 30
     keyboard = get_downs_keyboard(current_limit=default_limit)
     await message.answer(WELCOME, reply_markup=keyboard)
 
 
-@router.callback_query(lambda c: c.data == "min:30" or c.data == "min:60" or c.data == "min:120" or c.data == "min:180")
-async def process_callback_button1(callback: types.CallbackQuery):
-    limit_str = callback.data[4:]
-    print(limit_str)
-    time_limit = callback.data
-    result = AffectedSubscribersChecker().get_affected_subscribers()
+@router.callback_query(AffectedSubscribersFactory.filter())
+@superuser_required
+async def process_callback_button1(
+    callback: types.CallbackQuery, callback_data: AffectedSubscribersFactory
+):
+    from_datetime = datetime.now() - timedelta(minutes=callback_data.from_minutes)
+    data = await get_affected_subscribers(from_datetime=from_datetime)
 
-    await callback.message.answer(str(result))
-    await callback.message.answer(limit_str)
+    text = ""
+    total_subscribers = 0
+    for device, subscriber_count in data.items():
+        if isinstance(subscriber_count, int):
+            total_subscribers += subscriber_count
+        text += f"{device}: {subscriber_count}\n"
+
+    text += (
+        f"\nОбщее кол-во оборудования: {len(data)}"
+        f"\nОбщее кол-во абонентов: {total_subscribers}"
+    )
+
+    await callback.message.answer(text)
+    await callback.answer()
