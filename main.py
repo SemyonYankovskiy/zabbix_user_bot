@@ -10,7 +10,7 @@ async def main():
     dp.include_routers(
         welcome.router,
         become.router,
-        availability.router
+        availability.router,
     )
 
     # ==== Init Database ====
