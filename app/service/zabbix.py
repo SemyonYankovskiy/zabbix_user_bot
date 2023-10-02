@@ -35,15 +35,14 @@ class ZabbixService:
         cls, from_group_names: List[str], time_from: datetime
     ) -> List[str]:
         devices = []
-
         async with cls.zabbix_connector() as zbx:
-            group = await zbx.hostgroup.get(filter={"name": from_group_names})
-            zabbix_group_id = group[0]["groupid"]
+            groups = await zbx.hostgroup.get(filter={"name": from_group_names})
+            zabbix_group_ids = [gr["groupid"] for gr in groups]
             hosts_id = [
                 host["hostid"]
                 # Получение всех хостов в группе с заданным идентификатором группы.
                 for host in await zbx.host.get(
-                    groupids=[zabbix_group_id],
+                    groupids=zabbix_group_ids,
                     output=["hostid"],
                     filter={"status": "0"},
                 )
@@ -56,6 +55,8 @@ class ZabbixService:
                 time_from=time_from.timestamp(),
                 filter={"name": ["Оборудование недоступно", "SWITCH DOWN"]},
             )
+
+            print(hosts_problems_list)
 
             # По проблеме находим триггер, а затем название узла сети
             for problem in hosts_problems_list:

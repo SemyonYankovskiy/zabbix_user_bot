@@ -7,7 +7,6 @@ router = Router()
 
 @router.message(Command("start"))
 async def cmd_start(message: types.Message):
-    print("cmd_start")
     user = await User.get_or_create(tg_user=message.from_user)
     await message.answer(f"Привет, {message.from_user.username}, работаем")
     if user.is_superuser:
