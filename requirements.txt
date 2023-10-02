@@ -6,3 +6,4 @@ aiofiles>=23.1.0
 qrcode>=7.4.2
 Pillow>=10.0.1
 psutil>=5.9.5
+aiozabbix
