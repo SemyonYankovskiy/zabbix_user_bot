@@ -80,10 +80,15 @@ async def process_callback_button1(
 
     parts = text_divider(text)
 
+    if len(parts) == 1:
+        answer_type = callback.message.edit_text
+    else:
+        answer_type = callback.message.answer
+
     for i, part_text in enumerate(parts):
         if i == len(parts) - 1:
             # Для последней части
-            await callback.message.answer(
+            await answer_type(
                 part_text, reply_markup=get_downs_keyboard(callback_data.from_minutes)
             )
         else:
