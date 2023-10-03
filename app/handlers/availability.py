@@ -53,6 +53,7 @@ def text_divider(text: str) -> List[str]:
             result_data.append(part)
             length = len(line) + 1
             part = f"{line}\n"
+    result_data.append(part)
 
     return result_data
 
