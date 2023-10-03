@@ -1,5 +1,5 @@
 venv
 .idea
 .run
-
+.env
 db.sqlite3
