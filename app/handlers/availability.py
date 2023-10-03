@@ -34,7 +34,7 @@ def get_downs_keyboard(current_limit: int):
 @router.message(Command("check_downs"))
 @superuser_required
 async def check_downs(message: types.Message):
-    default_limit = 30
+    default_limit = 0
     keyboard = get_downs_keyboard(current_limit=default_limit)
     await message.answer(WELCOME, reply_markup=keyboard)
 
@@ -59,5 +59,8 @@ async def process_callback_button1(
         f"\nОбщее кол-во абонентов: {total_subscribers}"
     )
 
-    await callback.message.answer(text)
+    await callback.message.edit_text(
+        text,
+        reply_markup=get_downs_keyboard(current_limit=callback_data.from_minutes),
+    )
     await callback.answer()
