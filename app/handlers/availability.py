@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from typing import List
 
 from aiogram import Router, types
 from aiogram.filters import Command
@@ -39,6 +40,23 @@ async def check_downs(message: types.Message):
     await message.answer(WELCOME, reply_markup=keyboard)
 
 
+def text_divider(text: str) -> List[str]:
+    length = 0
+    part = ""
+    result_data = []
+
+    for line in text.split("\n"):
+        length += len(line) + 1
+        if length < 4096:
+            part += f"{line}\n"
+        else:
+            result_data.append(part)
+            length = len(line) + 1
+            part = f"{line}\n"
+
+    return result_data
+
+
 @router.callback_query(AffectedSubscribersFactory.filter())
 @superuser_required
 async def process_callback_button1(
@@ -59,8 +77,15 @@ async def process_callback_button1(
         f"\nОбщее кол-во абонентов: {total_subscribers}"
     )
 
-    await callback.message.edit_text(
-        text,
-        reply_markup=get_downs_keyboard(current_limit=callback_data.from_minutes),
-    )
+    parts = text_divider(text)
+
+    for i, part_text in enumerate(parts):
+        if i == len(parts) - 1:
+            # Для последней части
+            await callback.message.edit_text(
+                part_text, reply_markup=get_downs_keyboard(callback_data.from_minutes)
+            )
+        else:
+            await callback.message.answer(part_text)
+
     await callback.answer()
