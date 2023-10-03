@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    command: python ./main.py
+    ports:
+      - "8080:8080"
+    volumes:
+      - "./db"
+    environment:
+          TG_TOKEN:
+          ZABBIX_API_LOGIN:
+          ZABBIX_API_PASSWORD:
+          ZABBIX_API_URL:
+          ZABBIX_GROUP_NAMES:
+          ECSTASY_URL:
+          ECSTASY_LOGIN:
+          ECSTASY_PASSWORD:
+          BECOME_TOKEN:

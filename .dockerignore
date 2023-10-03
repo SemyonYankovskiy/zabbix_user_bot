@@ -1,0 +1,7 @@
+*
+!app
+!database
+!main.py
+!settings.py
+!requirements.txt
+!.env
