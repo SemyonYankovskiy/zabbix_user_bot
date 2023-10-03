@@ -14,7 +14,7 @@ async def main():
     )
 
     # ==== Init Database ====
-    db.init("sqlite+aiosqlite:///db.sqlite3")
+    db.init("sqlite+aiosqlite:///db/db.sqlite3")
     await db.create_all()
 
     await dp.start_polling(bot, skip_updates=True)
