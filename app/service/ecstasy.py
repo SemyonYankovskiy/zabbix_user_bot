@@ -15,28 +15,35 @@ class EcstasyConnector:
         self._tokens: Dict[str, str] = {}
 
     async def request(self, method: str, url: str, **kwargs):
+        """
+        Функция выполняет HTTP-запрос с обработкой аутентификации.
+        """
         if not self._tokens:
             await self._do_auth()
 
-        if not kwargs.get("headers"):
-            kwargs["headers"] = {}
-        kwargs["headers"].update(
-            {"Authorization": f"Bearer {self._tokens.get('access')}"}
-        )
+        kwargs["headers"] = self._add_token(kwargs.get("headers"))
 
         resp = await self._session.request(method, self._url + url, **kwargs)
-        if resp.status == 401:
+        if resp.status in [401, 403]:
             await self._do_auth()
+            kwargs["headers"] = self._add_token(kwargs.get("headers"))
             resp = await self._session.request(method, self._url + url, **kwargs)
         return resp
+
+    def _add_token(self, headers: Optional[Dict[str, str]]) -> Dict[str, str]:
+        if headers is None:
+            headers = {}
+        headers.update({"Authorization": f"Bearer {self._tokens.get('access')}"})
+        return headers
 
     async def _do_auth(self):
         # Для начало проверяем, имеется ли возможность обновить access token через refresh token
         if self._tokens.get("refresh"):
             resp = await self._session.post(
                 self._url + "/api/token/refresh",
-                json={"refresh": self._tokens("refresh")},
+                json={"refresh": self._tokens.get("refresh")},
             )
+            print("DO AUTH", resp.status)
             if resp.status == 200:
                 self._tokens = await resp.json()
                 resp.close()
