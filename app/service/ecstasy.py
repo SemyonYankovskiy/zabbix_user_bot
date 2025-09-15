@@ -14,7 +14,7 @@ class EcstasyService:
 
     @property
     def session(self) -> aiohttp.ClientSession:
-        if self._session is None:
+        if self._session is None or self._session.closed:
             self._session = aiohttp.ClientSession(base_url=self._base_url, headers=self.headers)
         return self._session
 
