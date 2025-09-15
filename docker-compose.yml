@@ -1,10 +1,8 @@
-version: '3'
-
 services:
   app:
     build: .
     image: zabbix_users_bot:1.2
-    command: python ./main.py
+    restart: always
     volumes:
       - "./db:/app/db"
     env_file:
